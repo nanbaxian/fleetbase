@@ -210,6 +210,121 @@ Fleetbase offers a few open sourced apps which are built on Fleetbase which can 
 3.  **AI** ~ AI Agent intrgation for system and workflows.
 4. **Dynamic Rules System** ~ Trigger events, tasks jobs from a rule builder on resources.
 
+Ubuntu 22.04 LTS 是目前部署 Fleetbase 最稳定、兼容性最强的环境之一——比 CentOS 系列更省心，所有依赖版本都直接支持。下面是为你量身定制的完整部署方案。
+
+🧱 一、系统与基础环境建议
+项目	推荐配置	说明
+系统	Ubuntu 22.04 LTS (64 bit)	支持到 2027 年，兼容 Docker、PHP 8、Node 18+
+CPU / 内存	≥ 4 核 / 8 GB RAM	小规模部署；中大型可 8 核 16 GB
+磁盘	≥ 50 GB SSD	Docker 卷+数据库占用较多
+网络	稳定公网，开放 80 / 443 端口	便于反代与 SSL 证书
+🐋 二、推荐部署模式：Docker Compose（官方方式）
+
+Fleetbase 官方在 GitHub 与 docs.fleetbase.io 都建议用 Docker Compose，安装步骤如下。
+
+1️⃣ 安装 Docker & Compose
+sudo apt update && sudo apt upgrade -y
+sudo apt install ca-certificates curl gnupg lsb-release -y
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu jammy stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+sudo systemctl enable docker && sudo systemctl start docker
+docker --version
+docker compose version
+
+2️⃣ 获取 Fleetbase 源代码
+git clone https://github.com/fleetbase/fleetbase.git
+cd fleetbase
+
+3️⃣ 复制环境模板并配置变量
+cp .env.example .env
+nano .env
+
+
+关键变量：
+
+APP_KEY=base64:随机生成
+APP_URL=https://api.example.com
+CONSOLE_URL=https://console.example.com
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=fleetbase
+DB_USERNAME=fleetbase
+DB_PASSWORD=strongpassword
+GOOGLE_MAPS_API_KEY=你的API密钥
+
+4️⃣ 启动容器
+docker compose up -d
+
+
+启动后默认包含：
+
+api (Laravel API)
+
+console (Ember 前端)
+
+socket (WebSocket)
+
+db (MySQL)
+
+redis
+
+5️⃣ 初始化数据库
+docker compose exec api php artisan migrate --seed
+
+6️⃣ 配置 Nginx 反向代理 + SSL
+
+如果你使用宝塔或自己管理 Nginx：
+
+server {
+    server_name api.example.com;
+    location / {
+        proxy_pass http://127.0.0.1:9000;  # 对应容器或端口
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+    listen 80;
+}
+
+
+再用 Certbot 或 宝塔 一键 Let’s Encrypt 证书，开启 HTTPS。
+
+🧩 三、可选优化
+模块	功能	命令 / 提示
+Redis	缓存与队列	默认容器内已启用
+备份卷	数据持久化	/var/lib/docker/volumes/fleetbase_*
+Map API	路线 / 定位 / 距离	建议绑定 Google Maps 或 OpenStreetMap API
+监控	Uptime Kuma / Netdata	独立容器即可
+防火墙	ufw allow 80,443,22/tcp	其余端口关闭
+🧰 四、若不想用 Docker（原生部署简略）
+
+仍然可行，但需：
+
+PHP 8.1 + Composer 2.x
+
+Node 18 + Ember CLI + pnpm
+
+MySQL 8.0 + Redis 6+
+
+Nginx / Apache 配置 FPM 反代
+
+手动运行 php artisan migrate --seed、npm build
+
+不如 Docker 轻松。
+
+✅ 五、最终建议
+
+Ubuntu 22.04 + Docker Compose 是最省事组合。
+
+宝塔也可装 Docker 管理插件，用它启动 compose 更方便。
+
+数据、上传目录、.env 都挂载宿主机卷，便于未来迁移。
 ## 🪲 Bugs and 💡 Feature Requests
 
 Have a bug or a feature request? Please check the <a href="https://github.com/fleetbase/fleetbase/issues">issue tracker</a> and search for existing and closed issues. If your problem or idea is not addressed yet, please <a href="https://github.com/fleetbase/fleetbase/issues/new">open a new issue</a>.
@@ -244,4 +359,5 @@ Get updates on Fleetbase's development and chat with the project maintainers and
 # License & Copyright
 
 Fleetbase is made available under the terms of the <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">GNU Affero General Public License 3.0 (AGPL 3.0)</a>. For other licenses <a href="mailto:hello@fleetbase.io" target="_blank">contact us</a>.
+
 
