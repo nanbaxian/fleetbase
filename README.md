@@ -27,6 +27,22 @@ Fleetbase is a modular logistics and supply chain operating system designed to s
 <p align="center" dir="auto">
   <img src="https://flb-assets.s3.ap-southeast-1.amazonaws.com/static/fleetbase_overview.png" alt="Fleetbase Console" width="1200" style="max-width: 100%;" />
 </p>
+Fleetbase 核心是基于 PHP + Laravel 的后端 API。 
+
+
+前端 / 控制台（Console）使用 Ember.js（JavaScript）技术栈。 
+
+
+使用 Node / npm / pnpm 工具来管理前端、构建、打包、扩展等。 
+
+
+数据存储主要用的是 MySQL（或兼容的关系数据库）作为后端数据库。 
+
+
+部分即时 /实时通信 /推送功能可能涉及 WebSocket / socket 服务。 
+
+
+官方推荐通过 Docker + Docker Compose 来部署，这是最简便、可移植性最好的方式。 
 
 ## Visual Feature Showcase
 
@@ -359,5 +375,6 @@ Get updates on Fleetbase's development and chat with the project maintainers and
 # License & Copyright
 
 Fleetbase is made available under the terms of the <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">GNU Affero General Public License 3.0 (AGPL 3.0)</a>. For other licenses <a href="mailto:hello@fleetbase.io" target="_blank">contact us</a>.
+
 
 
